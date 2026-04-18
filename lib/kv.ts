@@ -1,8 +1,8 @@
 import { Redis } from "@upstash/redis";
 
 const kv = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  url: process.env.getbriefd_KV_REST_API_URL!,
+  token: process.env.getbriefd_KV_REST_API_TOKEN!,
 });
 
 export type Interests = {
