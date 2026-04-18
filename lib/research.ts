@@ -185,8 +185,18 @@ export async function generateDigest(interests: Interests): Promise<Digest> {
 
   return {
     intro: parsed.intro ?? "",
-    clusters: parsed.clusters,
-    signals: Array.isArray(parsed.signals) ? parsed.signals : [],
+    clusters: parsed.clusters.map((c) => ({
+      theme: c.theme ?? "",
+      summary: c.summary ?? "",
+      stories: (c.stories ?? []).map((s) => ({
+        headline: s.headline ?? "",
+        summary: s.summary ?? "",
+        whyItMatters: s.whyItMatters ?? "",
+        source: s.source ?? "",
+        url: s.url ?? "",
+      })),
+    })),
+    signals: Array.isArray(parsed.signals) ? parsed.signals.map((s) => s ?? "") : [],
     sources,
     generatedAt: new Date().toISOString(),
   };

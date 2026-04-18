@@ -13,7 +13,8 @@ function getTransporter() {
   });
 }
 
-function escapeHtml(s: string): string {
+function escapeHtml(s: string | null | undefined): string {
+  if (!s) return "";
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
