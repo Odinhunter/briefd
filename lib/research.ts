@@ -28,7 +28,7 @@ export type Digest = {
   generatedAt: string;
 };
 
-const MODEL = "gemini-2.0-flash";
+const MODEL = "gemini-2.5-flash-preview-04-17";
 
 // The system prompt is the core IP of briefd.
 //
