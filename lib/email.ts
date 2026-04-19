@@ -35,8 +35,8 @@ function safeUrl(url: string): string {
 
 // Ink theme colors (oklch values from design converted to email-safe hex)
 // emailBg:#0c0c0c  surface:#141414  border:#1e1e1e  text:#e8e4dc
-// textMuted:#6f6d6a  textDim:#3c3b3a  accent:#d97706 (amber-600 ≈ oklch(0.72 0.18 46))
-// tagBg:#1b1b1b  tagColor:#7a7874  divider:#1d1d1d  calloutBg:#161616
+// textMuted:#a8a5a2  textDim:#6f6d6a  accent:#d97706 (amber-600 ≈ oklch(0.72 0.18 46))
+// tagBg:#1b1b1b  tagColor:#9a9590  divider:#1d1d1d  calloutBg:#161616
 
 function sectionTag(theme: string): string {
   const ARTICLES = new Set(["the", "a", "an", "how", "why", "what", "when", "where"]);
@@ -58,7 +58,7 @@ export function renderDigestHtml(digest: Digest): string {
     .slice(0, 4)
     .map(
       (c) =>
-        `<span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;letter-spacing:0.1em;margin-right:16px;">${escapeHtml(sectionTag(c.theme))}</span>`
+        `<span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#a8a5a2;letter-spacing:0.1em;margin-right:16px;">${escapeHtml(sectionTag(c.theme))}</span>`
     )
     .join("");
 
@@ -77,14 +77,14 @@ export function renderDigestHtml(digest: Digest): string {
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">
         <tr>
           <td style="vertical-align:middle;padding-right:10px;white-space:nowrap;">
-            <span style="display:inline-block;background:#1b1b1b;color:#7a7874;font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;padding:3px 8px;border-radius:3px;">${escapeHtml(story.source)}</span>
+            <span style="display:inline-block;background:#1b1b1b;color:#9a9590;font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;padding:3px 8px;border-radius:3px;">${escapeHtml(story.source)}</span>
           </td>
           <td style="vertical-align:middle;">
             <a href="${url}" style="font-family:'DM Serif Display',Georgia,serif;font-size:17px;font-weight:400;color:#e8e4dc;line-height:1.25;text-decoration:none;">${escapeHtml(story.headline)}</a>
           </td>
         </tr>
       </table>
-      <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;line-height:1.7;color:#6f6d6a;margin-bottom:10px;">${escapeHtml(story.summary)}</div>
+      <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;line-height:1.7;color:#a8a5a2;margin-bottom:10px;">${escapeHtml(story.summary)}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
         <tr>
           <td style="background:#161616;border-left:3px solid #d97706;padding:12px 16px;">
@@ -103,8 +103,8 @@ export function renderDigestHtml(digest: Digest): string {
       return `
 <tr>
   <td style="padding:28px 40px;border-bottom:1px solid #1d1d1d;">
-    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#6f6d6a;margin-bottom:6px;text-transform:uppercase;">${escapeHtml(cluster.theme)}</div>
-    <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#6f6d6a;font-style:italic;line-height:1.6;margin-bottom:20px;">${escapeHtml(cluster.summary)}</div>
+    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#a8a5a2;margin-bottom:6px;text-transform:uppercase;">${escapeHtml(cluster.theme)}</div>
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#a8a5a2;font-style:italic;line-height:1.6;margin-bottom:20px;">${escapeHtml(cluster.summary)}</div>
     ${storiesHtml}
   </td>
 </tr>`;
@@ -115,11 +115,11 @@ export function renderDigestHtml(digest: Digest): string {
     ? `
 <tr>
   <td style="padding:28px 40px;border-bottom:1px solid #1d1d1d;">
-    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#6f6d6a;margin-bottom:20px;text-transform:uppercase;">Weak Signals</div>
+    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#a8a5a2;margin-bottom:20px;text-transform:uppercase;">Weak Signals</div>
     ${digest.signals
       .map(
         (s, i) =>
-          `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#6f6d6a;line-height:1.7;margin-bottom:${i < digest.signals.length - 1 ? "10px" : "0"};">&#8212; ${escapeHtml(s)}</div>`
+          `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#a8a5a2;line-height:1.7;margin-bottom:${i < digest.signals.length - 1 ? "10px" : "0"};">&#8212; ${escapeHtml(s)}</div>`
       )
       .join("")}
   </td>
@@ -129,11 +129,11 @@ export function renderDigestHtml(digest: Digest): string {
   const sourcesHtml =
     digest.sources && digest.sources.length
       ? `
-<div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;color:#3c3b3a;letter-spacing:0.1em;margin-bottom:10px;text-transform:uppercase;">Sources</div>
+<div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;color:#6f6d6a;letter-spacing:0.1em;margin-bottom:10px;text-transform:uppercase;">Sources</div>
 ${digest.sources
   .map(
     (s) =>
-      `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#6f6d6a;line-height:1.6;margin-bottom:4px;">&middot; <a href="${safeUrl(s.uri)}" style="color:#6f6d6a;text-decoration:none;">${escapeHtml(s.title)}</a></div>`
+      `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#a8a5a2;line-height:1.6;margin-bottom:4px;">&middot; <a href="${safeUrl(s.uri)}" style="color:#a8a5a2;text-decoration:none;">${escapeHtml(s.title)}</a></div>`
   )
   .join("")}
 <div style="height:1px;background:#1d1d1d;margin:16px 0;"></div>`
@@ -164,7 +164,7 @@ ${digest.sources
             <div style="font-family:'DM Serif Display',Georgia,serif;font-size:36px;font-weight:400;letter-spacing:-0.01em;color:#e8e4dc;line-height:1;">Briefd</div>
           </td>
           <td align="right" style="vertical-align:baseline;">
-            <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;letter-spacing:0.08em;text-align:right;line-height:1.6;">Daily Brief<br>${escapeHtml(dateLabel)}</div>
+            <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#a8a5a2;letter-spacing:0.08em;text-align:right;line-height:1.6;">Daily Brief<br>${escapeHtml(dateLabel)}</div>
           </td>
         </tr>
       </table>
@@ -192,10 +192,10 @@ ${digest.sources
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#3c3b3a;letter-spacing:0.06em;">Briefd &middot; Daily Intelligence</span>
+            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;letter-spacing:0.06em;">Briefd &middot; Daily Intelligence</span>
           </td>
           <td align="right">
-            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#3c3b3a;">Gemini 2.5 Pro + Google Search</span>
+            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;">Gemini 2.5 Pro + Google Search</span>
           </td>
         </tr>
       </table>
