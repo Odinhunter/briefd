@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { getSeenUrls, markUrlsSeen } from "./kv";
 import type { Interests } from "./kv";
 
 export type DigestStory = {
@@ -51,7 +52,7 @@ You have real-time web access. Use it aggressively. Search across primary source
 You will receive a description of the reader's interests and a set of keywords. These are a tight lens. If a story doesn't pass through that lens, it doesn't belong. Do not pad.
 
 ## What to research
-- Prioritise the LAST 24-72 HOURS. If nothing genuinely new happened in an area, say so — return fewer clusters rather than recycling stale context.
+- Prioritise the LAST 24 HOURS ONLY. Stories must have been published or updated within the past 24 hours. If nothing genuinely new happened in an area, say so — return fewer clusters rather than recycling stale context. Do not reach back further than 24 hours under any circumstances.
 - Actively seek: first-party announcements, funding rounds, regulatory actions, research papers, earnings surprises, personnel moves, product launches, and second-order consequences of events the reader may have already seen.
 - Avoid: SEO rewrites, rumour aggregators, recycled explainers, anything the reader would have caught on yesterday's front page.
 - When two or three separate events point in the same direction, name the pattern — that synthesis is your primary value-add.
@@ -105,22 +106,30 @@ Return ONLY valid JSON — no markdown fences, no preamble, no trailing text —
 
 If a topic area has no meaningful recent developments, omit its cluster entirely rather than padding. Accuracy over volume — always.`;
 
-function buildUserPrompt(interests: Interests): string {
+function buildUserPrompt(interests: Interests, seenUrls: string[]): string {
   const keywords = interests.keywords.length
     ? interests.keywords.join(", ")
     : "(none specified)";
   const description = interests.description.trim() || "(none specified)";
-  const today = new Date().toUTCString();
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  return `Today is ${today}.
+  const seenSection =
+    seenUrls.length > 0
+      ? `\n## Already covered — EXCLUDE these URLs entirely\nThe reader has already seen the stories at these URLs. Do NOT include them or summarize their content:\n${seenUrls.map((u) => `- ${u}`).join("\n")}\n`
+      : "";
 
+  return `Current time: ${now.toUTCString()}
+Only include stories published or updated AFTER: ${cutoff.toUTCString()}
+Discard anything older than that timestamp — even if it is topically relevant.
+${seenSection}
 ## Reader's interests (long form)
 ${description}
 
 ## Reader's keywords
 ${keywords}
 
-Search the web for the most recent and relevant developments. Produce today's personalized briefing following the system instructions exactly. Return JSON only — no markdown, no prose outside the JSON object.`;
+Search the web for the most recent and relevant developments from the past 24 hours only. Produce today's personalized briefing following the system instructions exactly. Return JSON only — no markdown, no prose outside the JSON object.`;
 }
 
 function extractJsonObject(text: string): string {
@@ -145,9 +154,11 @@ export async function generateDigest(interests: Interests): Promise<Digest> {
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const seenUrls = await getSeenUrls();
+
   const response = await ai.models.generateContent({
     model: MODEL,
-    contents: buildUserPrompt(interests),
+    contents: buildUserPrompt(interests, seenUrls),
     config: {
       systemInstruction: SYSTEM_PROMPT,
       // Google Search grounding gives the model real-time web access.
@@ -183,19 +194,27 @@ export async function generateDigest(interests: Interests): Promise<Digest> {
     throw new Error("Gemini JSON missing `clusters` array");
   }
 
+  const clusters = parsed.clusters.map((c) => ({
+    theme: c.theme ?? "",
+    summary: c.summary ?? "",
+    stories: (c.stories ?? []).map((s) => ({
+      headline: s.headline ?? "",
+      summary: s.summary ?? "",
+      whyItMatters: s.whyItMatters ?? "",
+      source: s.source ?? "",
+      url: s.url ?? "",
+    })),
+  }));
+
+  // Persist story URLs so the next run excludes them
+  const newUrls = clusters
+    .flatMap((c) => c.stories.map((s) => s.url))
+    .filter((u) => u && u.startsWith("http"));
+  await markUrlsSeen(newUrls);
+
   return {
     intro: parsed.intro ?? "",
-    clusters: parsed.clusters.map((c) => ({
-      theme: c.theme ?? "",
-      summary: c.summary ?? "",
-      stories: (c.stories ?? []).map((s) => ({
-        headline: s.headline ?? "",
-        summary: s.summary ?? "",
-        whyItMatters: s.whyItMatters ?? "",
-        source: s.source ?? "",
-        url: s.url ?? "",
-      })),
-    })),
+    clusters,
     signals: Array.isArray(parsed.signals) ? parsed.signals.map((s) => s ?? "") : [],
     sources,
     generatedAt: new Date().toISOString(),
