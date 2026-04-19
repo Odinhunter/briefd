@@ -33,6 +33,18 @@ function safeUrl(url: string): string {
   }
 }
 
+// Ink theme colors (oklch values from design converted to email-safe hex)
+// emailBg:#0c0c0c  surface:#141414  border:#1e1e1e  text:#e8e4dc
+// textMuted:#6f6d6a  textDim:#3c3b3a  accent:#d97706 (amber-600 ≈ oklch(0.72 0.18 46))
+// tagBg:#1b1b1b  tagColor:#7a7874  divider:#1d1d1d  calloutBg:#161616
+
+function sectionTag(theme: string): string {
+  const ARTICLES = new Set(["the", "a", "an", "how", "why", "what", "when", "where"]);
+  const words = theme.split(/\s+/);
+  const word = words.find((w) => !ARTICLES.has(w.toLowerCase())) ?? words[0];
+  return "/" + word.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 10);
+}
+
 export function renderDigestHtml(digest: Digest): string {
   const dateLabel = new Date(digest.generatedAt).toLocaleDateString("en-US", {
     weekday: "long",
@@ -41,160 +53,158 @@ export function renderDigestHtml(digest: Digest): string {
     day: "numeric",
   });
 
+  // Masthead section tags — up to 4 from cluster themes
+  const mastheadTags = digest.clusters
+    .slice(0, 4)
+    .map(
+      (c) =>
+        `<span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;letter-spacing:0.1em;margin-right:16px;">${escapeHtml(sectionTag(c.theme))}</span>`
+    )
+    .join("");
+
   const clustersHtml = digest.clusters
     .map((cluster, ci) => {
+      const isLastCluster = ci === digest.clusters.length - 1;
+
       const storiesHtml = cluster.stories
         .map((story, si) => {
           const url = safeUrl(story.url);
-          const isLast = si === cluster.stories.length - 1;
+          const isLastStory = si === cluster.stories.length - 1;
           return `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 ${isLast ? "0" : "24px"} 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td style="padding:0 0 ${isLast ? "0" : "24px"} 0;border-bottom:${isLast ? "none" : "1px solid #e8eaed"};">
-      <div style="font-family:'DM Serif Display',Georgia,serif;font-size:20px;font-weight:400;line-height:1.3;margin:0 0 8px 0;">
-        <a href="${url}" style="color:#0f1117;text-decoration:none;">${escapeHtml(story.headline)}</a>
-      </div>
-      <div style="font-family:Inter,Arial,sans-serif;font-size:14px;color:#808590;line-height:1.6;margin:0 0 12px 0;">${escapeHtml(story.summary)}</div>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <td style="padding-bottom:${isLastStory ? "0" : "22px"};">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">
         <tr>
-          <td style="background:#f0f4ff;border-left:3px solid #2563eb;padding:10px 14px;">
-            <div style="font-family:Inter,Arial,sans-serif;font-size:13px;color:#0f1117;line-height:1.6;"><span style="font-weight:600;color:#2563eb;">Why it matters — </span>${escapeHtml(story.whyItMatters)}</div>
+          <td style="vertical-align:middle;padding-right:10px;white-space:nowrap;">
+            <span style="display:inline-block;background:#1b1b1b;color:#7a7874;font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;font-weight:500;letter-spacing:0.12em;padding:3px 8px;border-radius:3px;">${escapeHtml(story.source)}</span>
+          </td>
+          <td style="vertical-align:middle;">
+            <a href="${url}" style="font-family:'DM Serif Display',Georgia,serif;font-size:17px;font-weight:400;color:#e8e4dc;line-height:1.25;text-decoration:none;">${escapeHtml(story.headline)}</a>
           </td>
         </tr>
       </table>
-      <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#808590;letter-spacing:0.04em;text-transform:uppercase;margin:10px 0 0 0;">
-        ${escapeHtml(story.source)}&nbsp;&nbsp;<a href="${url}" style="color:#2563eb;text-decoration:none;">READ &rarr;</a>
-      </div>
+      <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;line-height:1.7;color:#6f6d6a;margin-bottom:10px;">${escapeHtml(story.summary)}</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+        <tr>
+          <td style="background:#161616;border-left:3px solid #d97706;padding:12px 16px;">
+            <div style="font-family:'DM Serif Display',Georgia,serif;font-size:14px;line-height:1.55;color:#e8e4dc;font-style:italic;">${escapeHtml(story.whyItMatters)}</div>
+          </td>
+        </tr>
+      </table>
+      <a href="${url}" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#d97706;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">Read &rarr;</a>
     </td>
   </tr>
+  ${isLastStory ? "" : `<tr><td style="padding-bottom:22px;"><div style="height:1px;background:#1d1d1d;"></div></td></tr>`}
 </table>`;
         })
         .join("");
 
-      const isLastCluster = ci === digest.clusters.length - 1;
       return `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 ${isLastCluster ? "0" : "36px"} 0;">
-  <tr>
-    <td style="border-left:3px solid #2563eb;padding:0 0 0 12px;margin:0 0 6px 0;">
-      <div style="font-family:'DM Serif Display',Georgia,serif;font-size:19px;font-weight:400;color:#0f1117;line-height:1.2;margin:0 0 4px 0;">${escapeHtml(cluster.theme)}</div>
-      <div style="font-family:Inter,Arial,sans-serif;font-size:13px;color:#808590;font-style:italic;line-height:1.5;margin:0;">${escapeHtml(cluster.summary)}</div>
-    </td>
-  </tr>
-  <tr><td style="padding:18px 0 0 0;">${storiesHtml}</td></tr>
-</table>`;
+<tr>
+  <td style="padding:28px 40px;border-bottom:1px solid #1d1d1d;">
+    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#6f6d6a;margin-bottom:6px;text-transform:uppercase;">${escapeHtml(cluster.theme)}</div>
+    <div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#6f6d6a;font-style:italic;line-height:1.6;margin-bottom:20px;">${escapeHtml(cluster.summary)}</div>
+    ${storiesHtml}
+  </td>
+</tr>`;
     })
     .join("");
 
   const signalsHtml = digest.signals.length
     ? `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0 0 0;">
-  <tr>
-    <td style="background:#fefce8;border:1px solid #fde68a;padding:16px 20px;">
-      <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#a16207;margin:0 0 12px 0;">Weak Signals</div>
-      ${digest.signals
-        .map(
-          (s) =>
-            `<div style="font-family:Inter,Arial,sans-serif;font-size:13px;color:#374151;line-height:1.6;margin:0 0 6px 0;">— ${escapeHtml(s)}</div>`
-        )
-        .join("")}
-    </td>
-  </tr>
-</table>`
+<tr>
+  <td style="padding:28px 40px;border-bottom:1px solid #1d1d1d;">
+    <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#6f6d6a;margin-bottom:20px;text-transform:uppercase;">Weak Signals</div>
+    ${digest.signals
+      .map(
+        (s, i) =>
+          `<div style="font-family:'Inter',Arial,sans-serif;font-size:13px;color:#6f6d6a;line-height:1.7;margin-bottom:${i < digest.signals.length - 1 ? "10px" : "0"};">&#8212; ${escapeHtml(s)}</div>`
+      )
+      .join("")}
+  </td>
+</tr>`
     : "";
 
   const sourcesHtml =
     digest.sources && digest.sources.length
       ? `
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0 0;">
-  <tr>
-    <td style="border-top:1px solid #e8eaed;padding:20px 0 0 0;">
-      <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#808590;margin:0 0 10px 0;">Sources Consulted</div>
-      ${digest.sources
-        .map(
-          (s) =>
-            `<div style="font-family:Inter,Arial,sans-serif;font-size:12px;color:#808590;line-height:1.6;margin:0 0 4px 0;">— <a href="${safeUrl(s.uri)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(s.title)}</a></div>`
-        )
-        .join("")}
-    </td>
-  </tr>
-</table>`
+<div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;color:#3c3b3a;letter-spacing:0.1em;margin-bottom:10px;text-transform:uppercase;">Sources</div>
+${digest.sources
+  .map(
+    (s) =>
+      `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#6f6d6a;line-height:1.6;margin-bottom:4px;">&middot; <a href="${safeUrl(s.uri)}" style="color:#6f6d6a;text-decoration:none;">${escapeHtml(s.title)}</a></div>`
+  )
+  .join("")}
+<div style="height:1px;background:#1d1d1d;margin:16px 0;"></div>`
       : "";
 
   return `<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#f4f6f9;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;">
+<body style="margin:0;padding:0;background:#0c0c0c;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0c0c0c;">
+<tr>
+<td align="center" style="padding:32px 16px;">
+
+<table role="presentation" width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background:#0c0c0c;">
+
+  <!-- MASTHEAD -->
   <tr>
-    <td align="center" style="padding:32px 16px;">
-
-      <!-- Card -->
-      <table role="presentation" width="680" cellpadding="0" cellspacing="0" style="max-width:680px;width:100%;background:#ffffff;">
-
-        <!-- Masthead -->
+    <td style="padding:28px 40px 24px 40px;border-bottom:1px solid #1e1e1e;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="background:#2563eb;padding:20px 40px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td>
-                  <div style="font-family:Inter,Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1;">BRIEFD</div>
-                  <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;">Daily Intelligence</div>
-                </td>
-                <td align="right" style="vertical-align:bottom;">
-                  <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.75);letter-spacing:0.04em;">${escapeHtml(dateLabel)}</div>
-                </td>
-              </tr>
-            </table>
+          <td style="vertical-align:baseline;">
+            <div style="font-family:'DM Serif Display',Georgia,serif;font-size:36px;font-weight:400;letter-spacing:-0.01em;color:#e8e4dc;line-height:1;">Briefd</div>
+          </td>
+          <td align="right" style="vertical-align:baseline;">
+            <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#6f6d6a;letter-spacing:0.08em;text-align:right;line-height:1.6;">Daily Brief<br>${escapeHtml(dateLabel)}</div>
           </td>
         </tr>
+      </table>
+      <div style="margin-top:8px;">${mastheadTags}</div>
+    </td>
+  </tr>
 
-        <!-- Intro -->
+  <!-- INTRO (Lead deck) -->
+  <tr>
+    <td style="padding:36px 40px 32px 40px;border-bottom:1px solid #1d1d1d;">
+      <div style="font-family:'Inter',Arial,sans-serif;font-size:16px;line-height:1.65;color:#e8e4dc;font-weight:400;letter-spacing:-0.01em;">${escapeHtml(digest.intro)}</div>
+    </td>
+  </tr>
+
+  <!-- CLUSTERS -->
+  ${clustersHtml}
+
+  <!-- WEAK SIGNALS -->
+  ${signalsHtml}
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#141414;padding:24px 40px;border-top:1px solid #1e1e1e;">
+      ${sourcesHtml}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding:32px 40px 28px 40px;border-bottom:1px solid #e8eaed;">
-            <div style="font-family:Inter,Arial,sans-serif;font-size:16px;color:#0f1117;line-height:1.65;">${escapeHtml(digest.intro)}</div>
+          <td>
+            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#3c3b3a;letter-spacing:0.06em;">Briefd &middot; Daily Intelligence</span>
+          </td>
+          <td align="right">
+            <span style="font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#3c3b3a;">Gemini 2.5 Pro + Google Search</span>
           </td>
         </tr>
-
-        <!-- Clusters -->
-        <tr>
-          <td style="padding:32px 40px 0 40px;">
-            ${clustersHtml}
-          </td>
-        </tr>
-
-        <!-- Signals + Sources -->
-        <tr>
-          <td style="padding:0 40px 32px 40px;">
-            ${signalsHtml}
-            ${sourcesHtml}
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f4f6f9;padding:16px 40px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td>
-                  <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;color:#808590;letter-spacing:0.06em;text-transform:uppercase;">Briefd &middot; Daily Intelligence</div>
-                </td>
-                <td align="right">
-                  <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9px;color:#808590;letter-spacing:0.04em;">Gemini 2.5 Pro + Google Search</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
       </table>
     </td>
   </tr>
+
+</table>
+</td>
+</tr>
 </table>
 </body>
 </html>`;
