@@ -83,7 +83,7 @@ ${separator}`;
 
       return `
 <tr>
-  <td class="pad-lg" style="padding:44px 48px;border-bottom:1px solid #2a2a2d;">
+  <td class="pad-lg" style="padding:44px 54px;border-bottom:1px solid #2a2a2d;">
     <div style="font-family:${SANS};font-size:11px;font-weight:600;color:#8a8680;letter-spacing:0.18em;margin-bottom:10px;">${clusterNum} &nbsp;/&nbsp; ${total}</div>
     <div class="cluster-title" style="font-family:${SERIF};font-size:26px;font-weight:400;color:#f2ede3;line-height:1.25;margin-bottom:12px;">${escapeHtml(cluster.theme)}</div>
     <div style="font-family:${SANS};font-size:14px;color:#c0bcb3;font-style:italic;line-height:1.6;margin-bottom:32px;">${escapeHtml(cluster.summary)}</div>
@@ -96,7 +96,7 @@ ${separator}`;
   const signalsHtml = digest.signals.length
     ? `
 <tr>
-  <td class="pad-lg" style="padding:44px 48px;border-bottom:1px solid #2a2a2d;">
+  <td class="pad-lg" style="padding:44px 54px;border-bottom:1px solid #2a2a2d;">
     <div style="font-family:${SANS};font-size:11px;font-weight:600;color:#8a8680;letter-spacing:0.18em;margin-bottom:10px;">ON THE RADAR</div>
     <div style="font-family:${SERIF};font-size:22px;font-weight:400;color:#f2ede3;line-height:1.25;margin-bottom:24px;">Weak signals</div>
     ${digest.signals
@@ -163,7 +163,7 @@ ${digest.sources
 
   <!-- MASTHEAD -->
   <tr>
-    <td class="pad-lg" style="padding:36px 48px 30px 48px;border-bottom:1px solid #2a2a2d;">
+    <td class="pad-lg" style="padding:36px 54px 30px 54px;border-bottom:1px solid #2a2a2d;">
       <div class="brand" style="font-family:${SERIF};font-size:38px;font-weight:400;letter-spacing:-0.01em;color:#f2ede3;line-height:1;margin-bottom:14px;">Briefd</div>
       <div style="font-family:${SANS};font-size:11px;font-weight:600;color:#8a8680;letter-spacing:0.18em;text-transform:uppercase;">Daily Brief &nbsp;&middot;&nbsp; ${escapeHtml(dateLabel)}</div>
     </td>
@@ -171,7 +171,7 @@ ${digest.sources
 
   <!-- INTRO -->
   <tr>
-    <td class="pad-hero" style="padding:44px 48px 40px 48px;border-bottom:1px solid #2a2a2d;">
+    <td class="pad-hero" style="padding:44px 54px 40px 54px;border-bottom:1px solid #2a2a2d;">
       <div style="font-family:${SANS};font-size:10px;font-weight:700;color:#e88a2a;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:14px;">The Lead</div>
       <div class="intro" style="font-family:${SANS};font-size:17px;line-height:1.7;color:#f2ede3;font-weight:400;">${escapeHtml(digest.intro)}</div>
     </td>
@@ -185,7 +185,7 @@ ${digest.sources
 
   <!-- FOOTER -->
   <tr>
-    <td class="pad-footer" style="background:#161618;padding:32px 48px;border-top:1px solid #2a2a2d;">
+    <td class="pad-footer" style="background:#161618;padding:32px 54px;border-top:1px solid #2a2a2d;">
       ${sourcesHtml}
       <div style="font-family:${SANS};font-size:11px;color:#8a8680;letter-spacing:0.08em;line-height:1.7;">
         <span style="color:#c0bcb3;font-weight:600;">Briefd</span> &nbsp;&middot;&nbsp; Daily Intelligence<br>
