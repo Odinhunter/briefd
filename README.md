@@ -1,82 +1,71 @@
 # briefd
 
-Personal daily news digest tool. Saves your interests, researches the last 24–72 hours with Perplexity Sonar, emails you a tightly-written personalized brief.
+**A personal daily news brief: tell it what you follow, get a tightly written email every morning.**
 
-Phase 1: manual trigger only. No auth, no multi-user. Built for one reader — you.
+You describe your interests once, in plain language, plus a few sharpening keywords.
+Every day briefd searches the last 24 hours with Gemini and Google Search, groups what
+it finds into themes, explains why each story matters to you, and emails the result.
+Stories it has already sent you are skipped, so the brief only carries what's new.
 
-## Stack
-- Next.js 14 (App Router, TypeScript)
-- Vercel KV for interests storage
-- Perplexity Sonar (`sonar-pro`) for research + synthesis
-- Nodemailer + Gmail SMTP for delivery
-- Tailwind CSS
+Built for one reader. Next.js on Vercel, built solo by Ishan Kabra, April 2026.
 
-## Setup
+## How it works
 
-### 1. Install
-```bash
-npm install
+```
+dashboard ──► interests (Upstash Redis)
+                    │
+Vercel Cron (03:00 UTC) or "Generate & send"
+                    ▼
+lib/research.ts   Gemini 2.5 Pro + Google Search grounding
+                  → recent stories only, clustered by theme, with "why it matters"
+                  → excludes URLs already sent (seen-set in Redis)
+                    ▼
+lib/email.ts      mobile-first HTML + plain-text email via Gmail SMTP
 ```
 
-### 2. Env vars
-Copy the example and fill in:
-```bash
-cp .env.local.example .env.local
-```
-
-You need:
-- `PERPLEXITY_API_KEY` — from https://www.perplexity.ai/settings/api
-- `GMAIL_USER` — your Gmail address
-- `GMAIL_APP_PASSWORD` — a Google **App Password**, not your normal password. Create one at https://myaccount.google.com/apppasswords (you must have 2FA enabled on your Google account first).
-- `KV_REST_API_URL` + `KV_REST_API_TOKEN` — create a Vercel KV / Upstash Redis database in the Vercel dashboard under Storage, then copy the REST credentials from the `.env.local` tab.
-
-### 3. Run
-```bash
-npm run dev
-```
-Open http://localhost:6969.
-
-## Using it
-
-1. On the dashboard, write a detailed description of what you care about. Be specific — name companies, sub-fields, the debates you follow. The system prompt uses this as a tight lens.
-2. Add sharpening keywords (Enter or comma to add each).
-3. Click **Save interests**.
-4. Click **Generate & send**. Takes 30–60s. Check your inbox.
+- **Grounded, not remembered.** Search grounding gives the model live results, and the
+  prompt holds it to a strict recency window. If little happened, the brief is short
+  rather than padded.
+- **No repeats.** Every sent URL goes into a Redis set, and later runs tell the model to
+  exclude those stories.
+- **Defensive parsing.** The model is asked for pure JSON. Code fences and null fields
+  are handled rather than trusted away.
 
 ## Routes
 
 | Route | Method | Purpose |
 |---|---|---|
-| `/` | GET | Dashboard |
-| `/api/interests` | GET | Read saved interests |
-| `/api/interests` | POST | Save interests (`{ description, keywords }`) |
-| `/api/generate` | POST | Build digest via Perplexity + email it |
-| `/api/test-email` | GET / POST | Send a bare test email — useful for verifying SMTP before debugging the full pipeline |
+| `/` | GET | Dashboard: edit interests, trigger a brief |
+| `/api/interests` | GET / POST | Read / save interests (`{ description, keywords }`) |
+| `/api/generate` | POST | Build the brief and email it (dashboard button) |
+| `/api/generate` | GET | Same, for Vercel Cron; requires `Authorization: Bearer $CRON_SECRET` |
+| `/api/test-email` | GET / POST | Send a bare test email to check SMTP |
+
+## Setup
+
+```bash
+npm install
+npm run dev        # http://localhost:6969
+```
+
+Environment variables (`.env.local` locally, project settings on Vercel):
+
+| Variable | What it is |
+|---|---|
+| `GEMINI_API_KEY` | Google AI Studio API key |
+| `GMAIL_USER` | the Gmail address that sends and receives the brief |
+| `GMAIL_APP_PASSWORD` | a Google App Password (needs 2FA), not your account password |
+| `getbriefd_KV_REST_API_URL`, `getbriefd_KV_REST_API_TOKEN` | Upstash Redis credentials, injected by the Vercel integration |
+| `CRON_SECRET` | any long random string; Vercel Cron sends it automatically |
+| `BRIEFD_PASSWORD` | **set this on any public deployment.** It puts the dashboard and API behind a browser password prompt (any username) |
+
+Without `BRIEFD_PASSWORD`, anyone who finds the URL can change your interests or trigger
+paid Gemini runs.
 
 ## Troubleshooting
 
-**Gmail auth fails.** Make sure you're using an *App Password* (16 characters, grouped 4x4), not your Google account password. 2FA must be enabled on the account. Try `/api/test-email` first to isolate SMTP from the rest of the pipeline.
-
-**Perplexity JSON parse errors.** The system prompt asks for pure JSON but occasionally a model wraps it in fences — the parser handles both. If you're still hitting errors, the raw response is included in the error message; paste it into an issue.
-
-**Empty digest.** Broaden your interests or add more keywords. The prompt is intentionally strict about recency — if nothing genuinely new happened in your area in the last 72 hours, it will return fewer stories rather than pad.
-
-## Architecture
-
-```
-app/
-  page.tsx                  Dashboard (client component)
-  layout.tsx                Root layout
-  globals.css               Tailwind entry
-  api/
-    interests/route.ts      GET/POST interests → KV
-    generate/route.ts       POST → Perplexity → email
-    test-email/route.ts     SMTP smoke test
-
-lib/
-  kv.ts                     Interests persistence
-  perplexity.ts             Sonar call + system prompt (core IP)
-  email.ts                  HTML + text rendering + nodemailer
-```
-
-The system prompt in `lib/perplexity.ts` is the heart of the product. Iterate on it if the briefs aren't sharp enough.
+- **Gmail auth fails:** use an App Password (16 characters, 2FA on). Hit
+  `/api/test-email` first to isolate SMTP from the rest of the pipeline.
+- **JSON parse errors:** the raw model response is included in the error message.
+- **Empty brief:** broaden the description or add keywords. The recency rule is strict
+  on purpose.

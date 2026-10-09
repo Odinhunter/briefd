@@ -39,7 +39,9 @@ async function runDigest() {
 // Called by Vercel Cron — authenticated via CRON_SECRET
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  // Without a secret configured, "Bearer undefined" would otherwise match.
+  if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
